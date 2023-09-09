@@ -200,7 +200,7 @@ setInterval((async () => {
                 message += `> **There ${globalplayers != 1 ? 'are' : 'is'} currently ${globalplayers} player${globalplayers != 1 ? 's' : ''}`
                     + ` on ${globalservers} of ${rawj.servers.length} server${rawj.servers.length != 1 ? 's' : ''}`
                     + ` on [${CODPM_GAME == 'cod' ? 'COD1' : CODPM_GAME.toUpperCase()} v${CODPM_VERSION}](https://cod.pm?game=${CODPM_GAME}&version=${CODPM_VERSION})`;
-                if(parsedsrvs.length > 0)
+                if(DISCORD_MAXEMBEDS && parsedsrvs.length > 0)
                     message += `\n> Below ${globalservers == 1 ? 'is the' : 'are the top'} ${globalservers < DISCORD_MAXEMBEDS ? (globalservers == 1 ? 'only' : globalservers) : DISCORD_MAXEMBEDS} currently active server${rawj.servers.length != 1 ? 's' : ''}.`;
                 message += `\n> Updated: <t:${timestamp}:R>**`;
                 payload_json.content = message;
