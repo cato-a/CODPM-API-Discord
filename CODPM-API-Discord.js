@@ -90,8 +90,9 @@ setInterval((async () => {
                         continue;
 
                     const players = server.playerinfo.length;
+                    const activePlayers = server.clients - server.bots; // Display actual players minus the bots in the server
                     if(players - server.bots > 0) {
-                        globalplayers += players - server.bots;
+                        globalplayers += activePlayers;
                         globalservers++;
                         if(globalservers > 10)
                             continue;
@@ -102,8 +103,8 @@ setInterval((async () => {
                         const current = {
                             "ip": server.ip,
                             "port": server.port,
-                            "sv_hostname": sv_hostname,
-                            "clients": `${players}/${server.sv_maxclients}`,
+                            "sv_hostname": sv_hostname?sv_hostname:"Unnamed Server", // Replace empty string with "Unnamed Server"
+                            "clients": `${activePlayers}/${server.sv_maxclients}`,
                             "g_gametype": truncate(monotone(server.g_gametype), glength, '>').toLowerCase(),
                             "mapname": truncate(mapname.replace(/^[a-z]+_/, ''), mlength, '>'),
                             "connect": `${server.ip}:${server.port}`,
