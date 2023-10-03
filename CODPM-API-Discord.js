@@ -3,6 +3,7 @@ const DISCORD_TABLELAYOUT = 'ansi'; // 'ansi' or 'unicode'
 const DISCORD_MAXEMBEDS = 5;
 const CODPM_GAME = 'cod';
 const CODPM_VERSION = 1.1;
+const CONFIG_RENAME_EMPTY = 'Unnamed Server';
 
 // /!\ END of configuration /!\
 
@@ -89,14 +90,15 @@ setInterval((async () => {
                     if(server.hidden > 0 || server.sv_maxclients > 72) // ignoresrvs.some((element) => element.match(new RegExp(`^${server.ip}:(?:\\*|${server.port})$`)))
                         continue;
 
-                    const players = server.playerinfo.length;
-                    if(players - server.bots > 0) {
-                        globalplayers += players - server.bots;
+                    const players = server.playerinfo.length - server.bots;
+                    if(players > 0) {
+                        globalplayers += players;
                         globalservers++;
                         if(globalservers > 10)
                             continue;
                         let sv_hostname = server.sv_hostname.replace(/[^\x20-\x7E]+/g, '').replace(/^\s+|\s+$|(\s)\1+/g, (m, c) => c ? c : '');
                         sv_hostname = truncate(monotone(sv_hostname), hlength).replace(/(discord)|`/ig, (m, c) => c ? 'disсord' : '`');
+                        sv_hostname = !sv_hostname && CONFIG_RENAME_EMPTY ? CONFIG_RENAME_EMPTY : sv_hostname;
                         const mapname = monotone(server.mapname).toLowerCase();
 
                         const current = {
