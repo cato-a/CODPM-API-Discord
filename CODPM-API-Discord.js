@@ -82,13 +82,14 @@ setInterval((async () => {
                 if(rawj.masterlist_updated == updated) return;
                 updated = rawj.masterlist_updated;
 
-                let [globalplayers, globalservers, mhlength, mplength, mglength, mmlength, mclength] = new Array(7).fill(0);
+                let [globalplayers, globalservers, totalservers, mhlength, mplength, mglength, mmlength, mclength] = new Array(8).fill(0);
                 const [hlength, plength, glength, mlength, clength] = [30, 5, 5, 16, 21];
                 const parsedsrvs = new Array();
                 for(let i = 0; i < rawj.servers.length; i++) {
                     const server = rawj.servers[i];
                     if(server.hidden > 0 || server.sv_maxclients > 72) // ignoresrvs.some((element) => element.match(new RegExp(`^${server.ip}:(?:\\*|${server.port})$`)))
                         continue;
+                    totalservers++;
 
                     const players = server.playerinfo.length - server.bots;
                     if(players > 0) {
@@ -200,10 +201,10 @@ setInterval((async () => {
                 }
 
                 message += `> **There ${globalplayers != 1 ? 'are' : 'is'} currently ${globalplayers} player${globalplayers != 1 ? 's' : ''}`
-                    + ` on ${globalservers} of ${rawj.servers.length} server${rawj.servers.length != 1 ? 's' : ''}`
+                    + ` on ${globalservers} of ${totalservers} server${totalservers != 1 ? 's' : ''}`
                     + ` on [${CODPM_GAME == 'cod' ? 'COD1' : CODPM_GAME.toUpperCase()} v${CODPM_VERSION}](https://cod.pm?game=${CODPM_GAME}&version=${CODPM_VERSION})`;
                 if(DISCORD_MAXEMBEDS && parsedsrvs.length > 0)
-                    message += `\n> Below ${globalservers == 1 ? 'is the' : 'are the top'} ${globalservers < DISCORD_MAXEMBEDS ? (globalservers == 1 ? 'only' : globalservers) : DISCORD_MAXEMBEDS} currently active server${rawj.servers.length != 1 ? 's' : ''}.`;
+                    message += `\n> Below ${globalservers == 1 ? 'is the' : 'are the top'} ${globalservers < DISCORD_MAXEMBEDS ? (globalservers == 1 ? 'only' : globalservers) : DISCORD_MAXEMBEDS} currently active server${totalservers != 1 ? 's' : ''}.`;
                 message += `\n> Updated: <t:${timestamp}:R>**`;
                 payload_json.content = message;
 
