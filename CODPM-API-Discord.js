@@ -5,6 +5,7 @@ const CODPM_GAME = 'cod'; // cod, coduo, cod2, cod4
 const CODPM_VERSION = 1.1;
 const CONFIG_RENAME_EMPTY = 'Unnamed Server';
 const CONFIG_MAPIMG_URL = new URL('/mp_maps/', 'https://cod.pm'); // NOTE: trailing slash
+const CONFIG_SHOW_EMPTY = false; // List empty severs
 
 // /!\ END of configuration /!\
 
@@ -130,11 +131,10 @@ function mapimage(mapimage)
                 if(players > 0) {
                     globalplayers += players;
                     globalservers++;
+                }
 
-                    if(globalservers > 10)
-                        continue;
-
-                    let sv_hostname = server.sv_hostname.replace(/[^\x20-\x7E]+/g, '').replace(/^\s+|\s+$|(\s)\1+/g, (m, c) => c ? c : '');
+                if(totalservers <= 10 && (CONFIG_SHOW_EMPTY || players > 0)) {
+                    let sv_hostname = server.sv_hostname.replace(/^[^\x21-\x7E]+|[^\x21-\x7E]+$|([^\x21-\x7E]{2,})/g, (m, c) => (c && c.includes(' ') ? ' ' : ''));
                     sv_hostname = truncate(monotone(sv_hostname), hlength).replace(/(discord)|`/ig, (m, c) => c ? 'disсord' : '`');
                     sv_hostname = !sv_hostname && CONFIG_RENAME_EMPTY ? CONFIG_RENAME_EMPTY : sv_hostname;
                     const mapname = monotone(server.mapname).toLowerCase();
@@ -143,7 +143,8 @@ function mapimage(mapimage)
                         "ip": server.ip,
                         "port": server.port,
                         "sv_hostname": sv_hostname,
-                        "clients": `${players}/${server.sv_maxclients}`,
+                        "clients": players,
+                        "sv_maxclients": server.sv_maxclients,
                         "g_gametype": truncate(monotone(server.g_gametype), glength, '>').toLowerCase(),
                         "mapname": truncate(mapname.replace(/^[a-z]+_/, ''), mlength, '>'),
                         "connect": `${server.ip}:${server.port}`,
@@ -154,8 +155,11 @@ function mapimage(mapimage)
                     parsedsrvs.push(current);
                     if(current.sv_hostname.length > mhlength)
                         mhlength = current.sv_hostname.length;
-                    if(current.clients.length > mplength)
-                        mplength = current.clients.length;
+
+                    const maxclients = `${server.clients}/${server.sv_maxclients}`;
+                    if(maxclients.length > mplength)
+                        mplength = maxclients.length;
+
                     if(current.g_gametype.length > mglength)
                         mglength = current.g_gametype.length;
                     if(current.mapname.length > mmlength)
@@ -195,25 +199,29 @@ function mapimage(mapimage)
 
                 for(let i = 0; i < parsedsrvs.length; i++) {
                     const server = parsedsrvs[i];
+                    const maxclients = `${server.clients}/${server.sv_maxclients}`;
+
                     if(DISCORD_TABLELAYOUT == 'unicode') {
                         message += `║ [${ansicolorize(server.country_isocode, 32)}] ${server.sv_hostname.padEnd(hlength - mhlength)}`
-                            + ` ║ ${server.clients.padStart(plength - mplength)} ${server.g_gametype.padEnd(glength - mglength)} ${server.mapname.padEnd(mlength - mmlength)}`
+                            + ` ║ ${maxclients.padStart(plength - mplength)} ${server.g_gametype.padEnd(glength - mglength)} ${server.mapname.padEnd(mlength - mmlength)}`
                             + ` ║ /connect ${server.connect.padEnd(clength - mclength)} ║\n`;
                     } else {
                         message += `[${ansicolorize(server.country_isocode, 32)}] ${server.sv_hostname.padEnd(hlength - mhlength)}`
-                            + ` ${server.clients.padStart(plength - mplength)} ${server.g_gametype.padEnd(glength - mglength)} ${server.mapname.padEnd(mlength - mmlength)}`
+                            + ` ${maxclients.padStart(plength - mplength)} ${server.g_gametype.padEnd(glength - mglength)} ${server.mapname.padEnd(mlength - mmlength)}`
                             + ` /connect ${server.connect.padEnd(clength - mclength)}\n`;
                     }
 
                     const servernum = i + 1;
-                    if(!DISCORD_MAXEMBEDS || servernum > DISCORD_MAXEMBEDS) continue; // only up to DISCORD_MAXEMBEDS
+                    if(!DISCORD_MAXEMBEDS || servernum > DISCORD_MAXEMBEDS || server.clients < 1)
+                        continue; // only up to DISCORD_MAXEMBEDS
+
                     payload_json.embeds.push({
                         "type": "rich",
                         "title": `\`#${servernum} ${truncate(server.sv_hostname, 22).padEnd(22)}\``,
                         "color": 32768,
                         "fields": [{
                             "name": "Players",
-                            "value": server.clients,
+                            "value": maxclients,
                             "inline": true
                         }, {
                             "name": "Map (Gametype)",
@@ -240,7 +248,7 @@ function mapimage(mapimage)
 
             message += `> **There ${globalplayers != 1 ? 'are' : 'is'} currently ${globalplayers} player${globalplayers != 1 ? 's' : ''}`
                 + ` on ${globalservers} of ${totalservers} server${totalservers != 1 ? 's' : ''}`
-                + ` on [${CODPM_GAME == 'cod' ? 'COD1' : CODPM_GAME.toUpperCase()} v${CODPM_VERSION}](https://cod.pm?game=${CODPM_GAME}&version=${CODPM_VERSION})`;
+                + ` on [${CODPM_GAME == 'cod' ? 'COD1' : CODPM_GAME.toUpperCase()} v${CODPM_VERSION}](https://cod.pm/${CODPM_GAME}/${CODPM_VERSION})`;
             if(DISCORD_MAXEMBEDS && parsedsrvs.length > 0)
                 message += `\n> Below ${globalservers == 1 ? 'is the' : 'are the top'} ${globalservers < DISCORD_MAXEMBEDS ? (globalservers == 1 ? 'only' : globalservers) : DISCORD_MAXEMBEDS} currently active server${totalservers != 1 ? 's' : ''}.`;
             message += `\n> Updated: <t:${timestamp}:R>**`;
@@ -266,5 +274,5 @@ function mapimage(mapimage)
         } catch(err) {
             console.error(`Unable to fetch ${CODPM_API}:`, err);
         }
-    }), 10 * 1000);
+    }), 20 * 1000);
 })();
